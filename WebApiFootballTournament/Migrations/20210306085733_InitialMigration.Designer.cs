@@ -10,7 +10,7 @@ using WebApiFootballTournament.DbContexts;
 namespace WebApiFootballTournament.Migrations
 {
     [DbContext(typeof(FootballTournamentContext))]
-    [Migration("20210303080714_InitialMigration")]
+    [Migration("20210306085733_InitialMigration")]
     partial class InitialMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -23,8 +23,13 @@ namespace WebApiFootballTournament.Migrations
 
             modelBuilder.Entity("WebApiFootballTournament.Entities.Group", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(1)
                         .HasColumnType("nvarchar(1)");
 
                     b.HasKey("Id");
@@ -34,11 +39,13 @@ namespace WebApiFootballTournament.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "A"
+                            Id = new Guid("5c7e7eea-04fc-4935-8b18-d9c88da3b828"),
+                            Name = "A"
                         },
                         new
                         {
-                            Id = "B"
+                            Id = new Guid("2107ce76-80ac-4041-a80a-3736cce78f1b"),
+                            Name = "B"
                         });
                 });
 
@@ -56,8 +63,8 @@ namespace WebApiFootballTournament.Migrations
                     b.Property<int>("Draw")
                         .HasColumnType("int");
 
-                    b.Property<string>("GroupId")
-                        .HasColumnType("nvarchar(1)");
+                    b.Property<Guid?>("GroupId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Lost")
                         .HasColumnType("int");
@@ -85,7 +92,7 @@ namespace WebApiFootballTournament.Migrations
                             Id = new Guid("d28888e9-2ba9-473a-a40f-e38cb54f9b35"),
                             Description = "Description1",
                             Draw = 0,
-                            GroupId = "B",
+                            GroupId = new Guid("5c7e7eea-04fc-4935-8b18-d9c88da3b828"),
                             Lost = 0,
                             Name = "Team1",
                             PointsScored = 0,

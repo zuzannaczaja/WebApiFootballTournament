@@ -13,6 +13,7 @@ namespace WebApiFootballTournament.Profiles
             CreateMap<Entities.Team, Models.TeamDto>();
             CreateMap<Models.TeamForCreationDto, Entities.Team>();
             CreateMap<Models.TeamForCreationDto, Models.TeamDto>();
+            CreateMap<Models.TeamForUpdateDto, Entities.Team>();
         }
     }
 }

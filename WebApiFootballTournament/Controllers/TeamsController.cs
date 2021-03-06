@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WebApiFootballTournament.Entities;
 using WebApiFootballTournament.Models;
 using WebApiFootballTournament.Services;
 
@@ -44,7 +45,7 @@ namespace WebApiFootballTournament.Controllers
                 return NotFound();
             }
 
-            return Ok(teamFromRepo);
+            return Ok(_mapper.Map<TeamDto>(teamFromRepo));
         }
 
         [HttpPost]
@@ -90,6 +91,30 @@ namespace WebApiFootballTournament.Controllers
 
             _footballTournamentRepository.Save();
 
+            return NoContent();
+        }
+
+        [HttpPut("{teamId}")]
+        public IActionResult UpdateTeam(Guid teamId, TeamForUpdateDto team)
+        {
+            if (!_footballTournamentRepository.TeamExists(teamId))
+            {
+                return NotFound();
+            };
+
+            var teamFromRepo = _footballTournamentRepository.GetTeam(teamId);
+
+            team.GroupId = (Guid)team.GroupId;
+
+            _mapper.Map(team, teamFromRepo);
+
+            var group = _footballTournamentRepository.GetGroup((Guid)team.GroupId);
+            group.Teams.Add(teamFromRepo);
+
+            _footballTournamentRepository.UpdateTeam(teamFromRepo);
+            _footballTournamentRepository.UpdateGroup(group);
+
+            _footballTournamentRepository.Save();
             return NoContent();
         }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,6 +26,18 @@ namespace WebApiFootballTournament.Services
             return _context.Teams.ToList<Team>();
         }
 
+        public IEnumerable<Team> GetTeamsForGroup(Guid groupId)
+        {
+            if (groupId == Guid.Empty)
+            {
+                throw new ArgumentNullException(nameof(groupId));
+            }
+
+            return _context.Teams
+                        .Where(c => c.GroupId == groupId)
+                        .OrderBy(c => c.PointsScored).ToList();
+        }
+
         public IEnumerable<Group> GetGroups()
         {
             return _context.Groups.ToList<Group>();
@@ -40,9 +53,25 @@ namespace WebApiFootballTournament.Services
             return _context.Teams.FirstOrDefault(t => t.Id == teamId);
         }
 
-        public Group GetGroup(Char groupId)
+        public Team GetTeamForGroup(Guid teamId, Guid groupId)
         {
-            if (groupId == null)
+            if (teamId == Guid.Empty)
+            {
+                throw new ArgumentNullException(nameof(teamId));
+            }
+
+            if (groupId == Guid.Empty)
+            {
+                throw new ArgumentNullException(nameof(groupId));
+            }
+
+            return _context.Teams
+              .Where(c => c.GroupId == groupId && c.Id == teamId).FirstOrDefault();
+        }
+
+        public Group GetGroup(Guid groupId)
+        {
+            if (groupId == Guid.Empty)
             {
                 throw new ArgumentNullException(nameof(groupId));
             }
@@ -59,6 +88,15 @@ namespace WebApiFootballTournament.Services
 
             team.Id = Guid.NewGuid();
 
+           /* if (groupId == '\0')
+            {
+                throw new ArgumentNullException(nameof(groupId));
+
+            } else
+            {
+                team.GroupId = groupId;
+            }*/
+
             _context.Teams.Add(team);
         }
 
@@ -68,6 +106,8 @@ namespace WebApiFootballTournament.Services
             {
                 throw new ArgumentNullException(nameof(group));
             }
+
+            group.Id = Guid.NewGuid();
 
             _context.Groups.Add(group);
         }
@@ -97,9 +137,9 @@ namespace WebApiFootballTournament.Services
             return false;
         }
 
-        public bool GroupExists(Char groupId)
+        public bool GroupExists(Guid groupId)
         {
-            if (groupId == null)
+            if (groupId == Guid.Empty)
             {
                 throw new ArgumentNullException(nameof(groupId));
             }
@@ -109,6 +149,13 @@ namespace WebApiFootballTournament.Services
 
         public void UpdateTeam(Team team)
         {
+            _context.Entry(team).State = EntityState.Modified;
+            //update
+        }
+
+        public void UpdateGroup(Group group)
+        {
+            _context.Entry(group).State = EntityState.Modified;
             //update
         }
 

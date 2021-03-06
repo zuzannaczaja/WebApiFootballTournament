@@ -30,7 +30,8 @@ namespace WebApiFootballTournament.Entities
         public int Lost { get; set; }
 
         [ForeignKey("GroupId")]
-        public Char? GroupId { get; set; }
-        public virtual Group Group { get; set; }
+        public Group Group { get; set; }
+        public Guid? GroupId { get; set; }
+        
     }
 }

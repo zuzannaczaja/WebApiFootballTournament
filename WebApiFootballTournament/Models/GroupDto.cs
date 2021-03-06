@@ -7,7 +7,8 @@ namespace WebApiFootballTournament.Models
 {
     public class GroupDto
     {
-        public Char Id { get; set; }
+        public Guid Id { get; set; }
+        public string Name { get; set; }
         public ICollection<TeamDto> Teams { get; set; } = new List<TeamDto>();
     }
 }

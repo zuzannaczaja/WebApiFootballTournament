@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WebApiFootballTournament.Entities;
 using WebApiFootballTournament.Models;
 using WebApiFootballTournament.Services;
 
@@ -33,8 +34,20 @@ namespace WebApiFootballTournament.Controllers
             return Ok(_mapper.Map<IEnumerable<GroupDto>>(groupsFromRepo));
         }
 
-        [HttpGet("groupId")]
-        public IActionResult GetGroup(Char groupId)
+        [HttpGet("{groupId}/teams")]
+        public ActionResult<IEnumerable<TeamDto>> GetCoursesForAuthor(Guid groupId)
+        {
+            if (!_footballTournamentRepository.GroupExists(groupId))
+            {
+                return NotFound();
+            }
+
+            var coursesForAuthorFromRepo = _footballTournamentRepository.GetTeamsForGroup(groupId);
+            return Ok(_mapper.Map<IEnumerable<TeamDto>>(coursesForAuthorFromRepo));
+        }
+
+        [HttpGet("{groupId}", Name = "GetGroup")]
+        public IActionResult GetGroup(Guid groupId)
         {
             if (!_footballTournamentRepository.GroupExists(groupId))
             {
@@ -57,7 +70,7 @@ namespace WebApiFootballTournament.Controllers
             _footballTournamentRepository.AddGroup(group);
             _footballTournamentRepository.Save();
 
-            return CreatedAtRoute("GetTeam", new { teamId = group.Id }, group);
+            return CreatedAtRoute("GetGroup", new { groupId = group.Id }, group);
         }
 
         [HttpOptions]

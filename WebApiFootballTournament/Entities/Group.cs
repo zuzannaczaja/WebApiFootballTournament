@@ -11,7 +11,11 @@ namespace WebApiFootballTournament.Entities
     public class Group
     {
         [Key]
-        public Char Id { get; set; }
+        public Guid Id { get; set; }
+
+        [Required]
+        [MaxLength(1)]
+        public string Name { get; set; }
 
         public ICollection<Team> Teams { get; set; } = new List<Team>();
     }

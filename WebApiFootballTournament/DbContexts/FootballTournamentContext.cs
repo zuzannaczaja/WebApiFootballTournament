@@ -21,7 +21,7 @@ namespace WebApiFootballTournament.DbContexts
                     Id = Guid.Parse("d28888e9-2ba9-473a-a40f-e38cb54f9b35"),
                     Name = "Team1",
                     Description = "Description1",
-                    GroupId = 'B'
+                    GroupId = Guid.Parse("5c7e7eea-04fc-4935-8b18-d9c88da3b828")
                 },
                 new Team()
                 {
@@ -34,11 +34,13 @@ namespace WebApiFootballTournament.DbContexts
             modelBuilder.Entity<Group>().HasData(
                 new Group()
                 {
-                    Id = 'A'
+                    Id = Guid.Parse("5c7e7eea-04fc-4935-8b18-d9c88da3b828"),
+                    Name = "A"
                 },
                 new Group()
                 {
-                    Id = 'B'
+                    Id = Guid.Parse("2107ce76-80ac-4041-a80a-3736cce78f1b"),
+                    Name = "B"
                 }
             );
 

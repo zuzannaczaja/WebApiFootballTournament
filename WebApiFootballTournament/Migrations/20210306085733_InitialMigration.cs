@@ -11,7 +11,8 @@ namespace WebApiFootballTournament.Migrations
                 name: "Groups",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(1)", nullable: false)
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(1)", maxLength: 1, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -29,7 +30,7 @@ namespace WebApiFootballTournament.Migrations
                     Win = table.Column<int>(type: "int", nullable: false),
                     Draw = table.Column<int>(type: "int", nullable: false),
                     Lost = table.Column<int>(type: "int", nullable: false),
-                    GroupId = table.Column<string>(type: "nvarchar(1)", nullable: true)
+                    GroupId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -44,13 +45,13 @@ namespace WebApiFootballTournament.Migrations
 
             migrationBuilder.InsertData(
                 table: "Groups",
-                column: "Id",
-                value: "A");
+                columns: new[] { "Id", "Name" },
+                values: new object[] { new Guid("5c7e7eea-04fc-4935-8b18-d9c88da3b828"), "A" });
 
             migrationBuilder.InsertData(
                 table: "Groups",
-                column: "Id",
-                value: "B");
+                columns: new[] { "Id", "Name" },
+                values: new object[] { new Guid("2107ce76-80ac-4041-a80a-3736cce78f1b"), "B" });
 
             migrationBuilder.InsertData(
                 table: "Teams",
@@ -60,7 +61,7 @@ namespace WebApiFootballTournament.Migrations
             migrationBuilder.InsertData(
                 table: "Teams",
                 columns: new[] { "Id", "Description", "Draw", "GroupId", "Lost", "Name", "PointsScored", "Win" },
-                values: new object[] { new Guid("d28888e9-2ba9-473a-a40f-e38cb54f9b35"), "Description1", 0, "B", 0, "Team1", 0, 0 });
+                values: new object[] { new Guid("d28888e9-2ba9-473a-a40f-e38cb54f9b35"), "Description1", 0, new Guid("5c7e7eea-04fc-4935-8b18-d9c88da3b828"), 0, "Team1", 0, 0 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Teams_GroupId",
