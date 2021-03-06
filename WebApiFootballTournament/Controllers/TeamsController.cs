@@ -62,7 +62,7 @@ namespace WebApiFootballTournament.Controllers
         [HttpOptions]
         public IActionResult GetTeamsOptions()
         {
-            Response.Headers.Add("Allow", "GET,OPTIONS,POST,PATCH,DELETE");
+            Response.Headers.Add("Allow", "GET,OPTIONS,POST,PUT,DELETE");
             return Ok();
         }
 
@@ -103,8 +103,6 @@ namespace WebApiFootballTournament.Controllers
             };
 
             var teamFromRepo = _footballTournamentRepository.GetTeam(teamId);
-
-            team.GroupId = (Guid)team.GroupId;
 
             _mapper.Map(team, teamFromRepo);
 

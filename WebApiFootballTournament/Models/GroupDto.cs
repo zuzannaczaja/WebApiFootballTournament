@@ -9,6 +9,5 @@ namespace WebApiFootballTournament.Models
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
-        public ICollection<TeamDto> Teams { get; set; } = new List<TeamDto>();
     }
 }
