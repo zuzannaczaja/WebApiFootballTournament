@@ -12,6 +12,9 @@ using WebApiFootballTournament.Services;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Newtonsoft.Json.Serialization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
+using System.IO;
 
 namespace WebApiFootballTournament
 {
@@ -41,7 +44,7 @@ namespace WebApiFootballTournament
 
             })
             .AddXmlDataContractSerializerFormatters()
-              .ConfigureApiBehaviorOptions(setupAction =>
+            .ConfigureApiBehaviorOptions(setupAction =>
             {
                 setupAction.InvalidModelStateResponseFactory = context =>
                 {
@@ -86,6 +89,15 @@ namespace WebApiFootballTournament
                 };
             });
 
+            services.AddSwaggerGen( c =>
+            {
+                c.SwaggerDoc("v1.0", new OpenApiInfo { Title = "Football Tournament API", Version = "v1.0", });
+
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
+            });
+
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             services.AddScoped<IFootballTournamentRepository, FootballTournamentRepository>();
@@ -113,6 +125,14 @@ namespace WebApiFootballTournament
             }
 
             app.UseHttpsRedirection();
+
+            app.UseSwagger();
+
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "Football Tournament API");
+                c.RoutePrefix = string.Empty;
+            });
 
             app.UseStaticFiles();
 
