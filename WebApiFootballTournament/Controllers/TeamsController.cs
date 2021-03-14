@@ -5,9 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using WebApiFootballTournament.Entities;
+using WebApiFootballTournament.Helpers;
 using WebApiFootballTournament.Models;
+using WebApiFootballTournament.ResourceParameters;
 using WebApiFootballTournament.Services;
 
 namespace WebApiFootballTournament.Controllers
@@ -34,11 +37,33 @@ namespace WebApiFootballTournament.Controllers
         /// Get a list of teams
         /// </summary>
         /// <returns>An ActionResult of type IEnumerable of Team</returns>
-        [HttpGet()]
+        [HttpGet(Name = "GetTeams")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public IActionResult GetTeams()
+        public ActionResult<IEnumerable<TeamDto>> GetTeams([FromQuery] TeamsResourceParameters teamsResourceParameters)
         {
-            var teamsFromRepo = _footballTournamentRepository.GetTeams();
+            var teamsFromRepo = _footballTournamentRepository.GetTeams(teamsResourceParameters);
+
+            var previousPageLink = teamsFromRepo.HasPrevious ?
+            CreateTeamsResourceUri(teamsResourceParameters,
+            ResourceUriType.PreviousPage) : null;
+
+            var nextPageLink = teamsFromRepo.HasNext ?
+                CreateTeamsResourceUri(teamsResourceParameters,
+                ResourceUriType.NextPage) : null;
+
+            var paginationMetadata = new
+            {
+                totalCount = teamsFromRepo.TotalCount,
+                pageSize = teamsFromRepo.PageSize,
+                currentPage = teamsFromRepo.CurrentPage,
+                totalPages = teamsFromRepo.TotalPages,
+                previousPageLink,
+                nextPageLink
+            };
+
+            Response.Headers.Add("X-Pagination",
+                JsonSerializer.Serialize(paginationMetadata));
+
             return Ok(_mapper.Map<IEnumerable<TeamDto>>(teamsFromRepo));
         }
 
@@ -175,6 +200,36 @@ namespace WebApiFootballTournament.Controllers
             _footballTournamentRepository.Save();
 
             return NoContent();
+        }
+
+        private string CreateTeamsResourceUri(TeamsResourceParameters teamsResourceParameters, ResourceUriType type)
+        {
+            switch (type)
+            {
+                case ResourceUriType.PreviousPage:
+                    return Url.Link("GetTeams",
+                      new
+                      {
+                          pageNumber = teamsResourceParameters.PageNumber - 1,
+                          pageSize = teamsResourceParameters.PageSize
+                      });
+                case ResourceUriType.NextPage:
+                    return Url.Link("GetTeams",
+                      new
+                      {
+                          pageNumber = teamsResourceParameters.PageNumber + 1,
+                          pageSize = teamsResourceParameters.PageSize
+                      });
+
+                default:
+                    return Url.Link("GetTeams",
+                    new
+                    {
+                        pageNumber = teamsResourceParameters.PageNumber,
+                        pageSize = teamsResourceParameters.PageSize
+                    });
+            }
+
         }
     }
 }

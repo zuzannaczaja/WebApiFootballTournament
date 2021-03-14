@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApiFootballTournament.DbContexts;
 using WebApiFootballTournament.Entities;
+using WebApiFootballTournament.Helpers;
+using WebApiFootballTournament.ResourceParameters;
 
 namespace WebApiFootballTournament.Services
 {
@@ -24,6 +26,18 @@ namespace WebApiFootballTournament.Services
         public IEnumerable<Team> GetTeams()
         {
             return _context.Teams.ToList<Team>();
+        }
+
+        public PagedList<Team> GetTeams(TeamsResourceParameters teamsResourceParameters)
+        {
+            if (teamsResourceParameters == null)
+            {
+                throw new ArgumentNullException(nameof(teamsResourceParameters));
+            }
+
+            var collection = _context.Teams as IQueryable<Team>;
+
+            return PagedList<Team>.Create(collection, teamsResourceParameters.PageNumber, teamsResourceParameters.PageSize);
         }
 
         public IEnumerable<Team> GetTeamsForGroup(Guid groupId)
