@@ -37,6 +37,11 @@ namespace WebApiFootballTournament.Services
 
             var collection = _context.Teams as IQueryable<Team>;
 
+            if (!string.IsNullOrWhiteSpace(teamsResourceParameters.OrderBy))
+            {
+                collection = collection.ApplySort(teamsResourceParameters.OrderBy);
+            }
+
             return PagedList<Team>.Create(collection, teamsResourceParameters.PageNumber, teamsResourceParameters.PageSize);
         }
 

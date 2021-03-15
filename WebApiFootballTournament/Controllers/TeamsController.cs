@@ -210,6 +210,7 @@ namespace WebApiFootballTournament.Controllers
                     return Url.Link("GetTeams",
                       new
                       {
+                          orderBy = teamsResourceParameters.OrderBy,
                           pageNumber = teamsResourceParameters.PageNumber - 1,
                           pageSize = teamsResourceParameters.PageSize
                       });
@@ -217,6 +218,7 @@ namespace WebApiFootballTournament.Controllers
                     return Url.Link("GetTeams",
                       new
                       {
+                          orderBy = teamsResourceParameters.OrderBy,
                           pageNumber = teamsResourceParameters.PageNumber + 1,
                           pageSize = teamsResourceParameters.PageSize
                       });
@@ -225,6 +227,7 @@ namespace WebApiFootballTournament.Controllers
                     return Url.Link("GetTeams",
                     new
                     {
+                        orderBy = teamsResourceParameters.OrderBy,
                         pageNumber = teamsResourceParameters.PageNumber,
                         pageSize = teamsResourceParameters.PageSize
                     });
