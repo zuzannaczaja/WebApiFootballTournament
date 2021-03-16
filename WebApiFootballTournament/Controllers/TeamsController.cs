@@ -23,14 +23,18 @@ namespace WebApiFootballTournament.Controllers
     {
         private readonly IFootballTournamentRepository _footballTournamentRepository;
         private readonly IMapper _mapper;
+        private readonly IPropertyCheckerService _propertyCheckerService;
 
-        public TeamsController(IFootballTournamentRepository footballTournamentRepository, IMapper mapper)
+        public TeamsController(IFootballTournamentRepository footballTournamentRepository, IMapper mapper, IPropertyCheckerService propertyCheckerService)
         {
             _footballTournamentRepository = footballTournamentRepository ??
                 throw new ArgumentNullException(nameof(footballTournamentRepository));
 
             _mapper = mapper ??
                 throw new ArgumentNullException(nameof(mapper));
+
+            _propertyCheckerService = propertyCheckerService ??
+                throw new ArgumentNullException(nameof(propertyCheckerService));
         }
 
         /// <summary>
@@ -39,8 +43,15 @@ namespace WebApiFootballTournament.Controllers
         /// <returns>An ActionResult of type IEnumerable of Team</returns>
         [HttpGet(Name = "GetTeams")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<TeamDto>> GetTeams([FromQuery] TeamsResourceParameters teamsResourceParameters)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public IActionResult GetTeams([FromQuery] TeamsResourceParameters teamsResourceParameters)
         {
+
+            if (!_propertyCheckerService.TypeHasProperties<TeamDto>(teamsResourceParameters.Fields))
+            {
+                return BadRequest();
+            }
+
             var teamsFromRepo = _footballTournamentRepository.GetTeams(teamsResourceParameters);
 
             var previousPageLink = teamsFromRepo.HasPrevious ?
@@ -64,19 +75,26 @@ namespace WebApiFootballTournament.Controllers
             Response.Headers.Add("X-Pagination",
                 JsonSerializer.Serialize(paginationMetadata));
 
-            return Ok(_mapper.Map<IEnumerable<TeamDto>>(teamsFromRepo));
+            return Ok(_mapper.Map<IEnumerable<TeamDto>>(teamsFromRepo).ShapeData(teamsResourceParameters.Fields));
         }
 
         /// <summary>
         /// Get a team
         /// </summary>
         /// <param name="teamId">The id of the team you want to get</param>
+        /// <param name="fields">The property fields of the team you want to get</param>
         /// <returns>An ActionResult of type Team</returns>
         [HttpGet("{teamId}", Name = "GetTeam")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public IActionResult GetTeam(Guid teamId)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public IActionResult GetTeam(Guid teamId, string fields)
         {
+            if (!_propertyCheckerService.TypeHasProperties<TeamDto>(fields))
+            {
+                return BadRequest();
+            }
+
             var teamFromRepo = _footballTournamentRepository.GetTeam(teamId);
 
             if (teamFromRepo == null)
@@ -84,7 +102,7 @@ namespace WebApiFootballTournament.Controllers
                 return NotFound();
             }
 
-            return Ok(_mapper.Map<TeamDto>(teamFromRepo));
+            return Ok(_mapper.Map<TeamDto>(teamFromRepo).ShapeData(fields));
         }
 
         /// <summary>
@@ -210,6 +228,7 @@ namespace WebApiFootballTournament.Controllers
                     return Url.Link("GetTeams",
                       new
                       {
+                          fields = teamsResourceParameters.Fields,
                           orderBy = teamsResourceParameters.OrderBy,
                           pageNumber = teamsResourceParameters.PageNumber - 1,
                           pageSize = teamsResourceParameters.PageSize
@@ -218,6 +237,7 @@ namespace WebApiFootballTournament.Controllers
                     return Url.Link("GetTeams",
                       new
                       {
+                          fields = teamsResourceParameters.Fields,
                           orderBy = teamsResourceParameters.OrderBy,
                           pageNumber = teamsResourceParameters.PageNumber + 1,
                           pageSize = teamsResourceParameters.PageSize
@@ -227,6 +247,7 @@ namespace WebApiFootballTournament.Controllers
                     return Url.Link("GetTeams",
                     new
                     {
+                        fields = teamsResourceParameters.Fields,
                         orderBy = teamsResourceParameters.OrderBy,
                         pageNumber = teamsResourceParameters.PageNumber,
                         pageSize = teamsResourceParameters.PageSize

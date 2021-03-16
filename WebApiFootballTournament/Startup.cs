@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.IO;
+using WebApiFootballTournament.Helpers;
 
 namespace WebApiFootballTournament
 {
@@ -99,6 +100,8 @@ namespace WebApiFootballTournament
             });
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+            services.AddTransient<IPropertyCheckerService, PropertyCheckerService>();
 
             services.AddScoped<IFootballTournamentRepository, FootballTournamentRepository>();
 
