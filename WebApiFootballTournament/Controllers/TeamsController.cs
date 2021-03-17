@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading.Tasks;
 using WebApiFootballTournament.Entities;
@@ -94,13 +95,24 @@ namespace WebApiFootballTournament.Controllers
         /// </summary>
         /// <param name="teamId">The id of the team you want to get</param>
         /// <param name="fields">The property fields of the team you want to get</param>
+        /// <param name="mediaType">The media type to display links or not</param>
         /// <returns>An ActionResult of type Team</returns>
+        [Produces("application/xml",
+            "application/json",
+            "application/vnd.marvin.hateoas+json")]
         [HttpGet("{teamId}", Name = "GetTeam")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult GetTeam(Guid teamId, string fields)
+        public IActionResult GetTeam(Guid teamId, string fields,
+            [FromHeader(Name = "Accept")] string mediaType)
         {
+            if (!MediaTypeHeaderValue.TryParse(mediaType,
+                out MediaTypeHeaderValue parsedMediaType))
+            {
+                return BadRequest();
+            }
+
             if (!_propertyCheckerService.TypeHasProperties<TeamDto>(fields))
             {
                 return BadRequest();
@@ -113,15 +125,20 @@ namespace WebApiFootballTournament.Controllers
                 return NotFound();
             }
 
-            var links = CreateLinksForTeam(teamId, fields);
+            if (parsedMediaType.MediaType == "application/vnd.marvin.hateoas+json")
+            {
+                var links = CreateLinksForTeam(teamId, fields);
 
-            var linkedResourceToReturn =
-                _mapper.Map<TeamDto>(teamFromRepo).ShapeData(fields)
-                 as IDictionary<string, object>;
+                var linkedResourceToReturn =
+                    _mapper.Map<TeamDto>(teamFromRepo).ShapeData(fields)
+                     as IDictionary<string, object>;
 
-            linkedResourceToReturn.Add("links", links);
+                linkedResourceToReturn.Add("links", links);
 
-            return Ok(linkedResourceToReturn);
+                return Ok(linkedResourceToReturn);
+            }
+
+            return Ok(_mapper.Map<TeamDto>(teamFromRepo).ShapeData(fields));
         }
 
         /// <summary>

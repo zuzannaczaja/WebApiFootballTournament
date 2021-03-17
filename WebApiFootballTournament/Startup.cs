@@ -10,12 +10,13 @@ using WebApiFootballTournament.DbContexts;
 using AutoMapper;
 using WebApiFootballTournament.Services;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Newtonsoft.Json.Serialization;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.IO;
 using WebApiFootballTournament.Helpers;
+using System.Linq;
 
 namespace WebApiFootballTournament
 {
@@ -88,6 +89,17 @@ namespace WebApiFootballTournament
                         ContentTypes = { "application/problem+json" }
                     };
                 };
+            });
+
+            services.Configure<MvcOptions>(config =>
+            {
+                var newtonsoftJsonOutputFormatter = config.OutputFormatters
+                      .OfType<NewtonsoftJsonOutputFormatter>()?.FirstOrDefault();
+
+                if (newtonsoftJsonOutputFormatter != null)
+                {
+                    newtonsoftJsonOutputFormatter.SupportedMediaTypes.Add("application/vnd.marvin.hateoas+json");
+                }
             });
 
             services.AddSwaggerGen( c =>
