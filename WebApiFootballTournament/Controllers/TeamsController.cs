@@ -54,28 +54,39 @@ namespace WebApiFootballTournament.Controllers
 
             var teamsFromRepo = _footballTournamentRepository.GetTeams(teamsResourceParameters);
 
-            var previousPageLink = teamsFromRepo.HasPrevious ?
-            CreateTeamsResourceUri(teamsResourceParameters,
-            ResourceUriType.PreviousPage) : null;
-
-            var nextPageLink = teamsFromRepo.HasNext ?
-                CreateTeamsResourceUri(teamsResourceParameters,
-                ResourceUriType.NextPage) : null;
-
             var paginationMetadata = new
             {
                 totalCount = teamsFromRepo.TotalCount,
                 pageSize = teamsFromRepo.PageSize,
                 currentPage = teamsFromRepo.CurrentPage,
-                totalPages = teamsFromRepo.TotalPages,
-                previousPageLink,
-                nextPageLink
+                totalPages = teamsFromRepo.TotalPages
             };
 
             Response.Headers.Add("X-Pagination",
                 JsonSerializer.Serialize(paginationMetadata));
 
-            return Ok(_mapper.Map<IEnumerable<TeamDto>>(teamsFromRepo).ShapeData(teamsResourceParameters.Fields));
+            var links = CreateLinksForTeams(teamsResourceParameters,
+                teamsFromRepo.HasNext,
+                teamsFromRepo.HasPrevious);
+
+            var shapedTeams = _mapper.Map<IEnumerable<TeamDto>>(teamsFromRepo)
+                   .ShapeData(teamsResourceParameters.Fields);
+
+            var shapedTeamsWithLinks = shapedTeams.Select(author =>
+            {
+                var teamAsDictionary = author as IDictionary<string, object>;
+                var teamLinks = CreateLinksForTeam((Guid)teamAsDictionary["Id"], null);
+                teamAsDictionary.Add("links", teamLinks);
+                return teamAsDictionary;
+            });
+
+            var linkedCollectionResource = new
+            {
+                value = shapedTeamsWithLinks,
+                links
+            };
+
+            return Ok(linkedCollectionResource);
         }
 
         /// <summary>
@@ -102,7 +113,15 @@ namespace WebApiFootballTournament.Controllers
                 return NotFound();
             }
 
-            return Ok(_mapper.Map<TeamDto>(teamFromRepo).ShapeData(fields));
+            var links = CreateLinksForTeam(teamId, fields);
+
+            var linkedResourceToReturn =
+                _mapper.Map<TeamDto>(teamFromRepo).ShapeData(fields)
+                 as IDictionary<string, object>;
+
+            linkedResourceToReturn.Add("links", links);
+
+            return Ok(linkedResourceToReturn);
         }
 
         /// <summary>
@@ -110,17 +129,26 @@ namespace WebApiFootballTournament.Controllers
         /// </summary>
         /// <param name="team">The team</param>
         /// <returns>An ActionResult of type Team</returns>
-        [HttpPost]
+        [HttpPost(Name = "CreateTeam")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult CreateTeam(TeamForCreationDto team)
         {
-            var teamEntity = _mapper.Map<Entities.Team>(team);
+            var teamEntity = _mapper.Map<Team>(team);
             _footballTournamentRepository.AddTeam(teamEntity);
             _footballTournamentRepository.Save();
 
             var teamToReturn = _mapper.Map<TeamDto>(team);
-            return CreatedAtRoute("GetTeam", new { teamId = teamToReturn.Id }, teamToReturn);
+
+            var links = CreateLinksForTeam(teamToReturn.Id, null);
+
+            var linkedResourceToReturn = teamToReturn.ShapeData(null)
+                as IDictionary<string, object>;
+            linkedResourceToReturn.Add("links", links);
+
+            return CreatedAtRoute("GetTeam",
+                new { teamId = linkedResourceToReturn["Id"] },
+                linkedResourceToReturn);
         }
 
         /// <summary>
@@ -174,7 +202,7 @@ namespace WebApiFootballTournament.Controllers
         /// </summary>
         /// <param name="teamId">The id of the team to update</param>
         /// <param name="team">The team with updated values</param>
-        [HttpPut("{teamId}")]
+        [HttpPut("{teamId}", Name = "UpdateTeam")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult UpdateTeam(Guid teamId, TeamForUpdateDto team)
@@ -202,7 +230,7 @@ namespace WebApiFootballTournament.Controllers
         /// Delete a team
         /// </summary>
         /// <param name="teamId">The id of the team to delete</param>
-        [HttpDelete("{teamId}")]
+        [HttpDelete("{teamId}", Name = "DeleteTeam")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult DeleteTeam(Guid teamId)
@@ -242,7 +270,7 @@ namespace WebApiFootballTournament.Controllers
                           pageNumber = teamsResourceParameters.PageNumber + 1,
                           pageSize = teamsResourceParameters.PageSize
                       });
-
+                case ResourceUriType.Current:
                 default:
                     return Url.Link("GetTeams",
                     new
@@ -254,6 +282,74 @@ namespace WebApiFootballTournament.Controllers
                     });
             }
 
+        }
+
+        private IEnumerable<LinkDto> CreateLinksForTeam(Guid teamId, string fields)
+        {
+            var links = new List<LinkDto>();
+
+            if (string.IsNullOrWhiteSpace(fields))
+            {
+                links.Add(
+                  new LinkDto(Url.Link("GetTeam", new { teamId }),
+                  "self",
+                  "GET"));
+            }
+            else
+            {
+                links.Add(
+                  new LinkDto(Url.Link("GetTeam", new { teamId, fields }),
+                  "self",
+                  "GET"));
+            }
+
+            links.Add(
+               new LinkDto(Url.Link("DeleteTeam", new { teamId }),
+               "delete_team",
+               "DELETE"));
+
+            links.Add(
+                new LinkDto(Url.Link("CreateTeam", new { teamId }),
+                "create_team",
+                "POST"));;
+
+            links.Add(
+                new LinkDto(Url.Link("UpdateTeam", new { teamId }),
+                "update_team",
+                "PUT"));
+
+            return links;
+        }
+
+        private IEnumerable<LinkDto> CreateLinksForTeams(
+            TeamsResourceParameters teamsResourceParameters,
+            bool hasNext, bool hasPrevious)
+        {
+            var links = new List<LinkDto>();
+
+            // self 
+            links.Add(
+               new LinkDto(CreateTeamsResourceUri(
+                   teamsResourceParameters, ResourceUriType.Current)
+               , "self", "GET"));
+
+            if (hasNext)
+            {
+                links.Add(
+                  new LinkDto(CreateTeamsResourceUri(
+                      teamsResourceParameters, ResourceUriType.NextPage),
+                  "nextPage", "GET"));
+            }
+
+            if (hasPrevious)
+            {
+                links.Add(
+                    new LinkDto(CreateTeamsResourceUri(
+                        teamsResourceParameters, ResourceUriType.PreviousPage),
+                    "previousPage", "GET"));
+            }
+
+            return links;
         }
     }
 }
